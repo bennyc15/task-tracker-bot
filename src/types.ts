@@ -29,6 +29,7 @@ export type Intent =
   | { type: 'add_tasks'; tasks: Array<{ name: string; required_roles: string[] }> }
   | { type: 'remove_task'; task_name: string }
   | { type: 'add_people'; people: Array<{ name: string; department: string; crew: string; role: string }> }
+  | { type: 'update_person'; name: string; department?: string; crew?: string; role?: string }
   | { type: 'remove_person'; name: string }
   | { type: 'record_completion'; person_name: string; task_name: string }
   | { type: 'get_report'; filter_field?: string; filter_value?: string }

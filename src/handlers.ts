@@ -7,6 +7,7 @@ import {
   getPeopleBy,
   getAllTasks,
   addPerson,
+  updatePerson,
   removePerson,
   addTask,
   removeTask,
@@ -67,6 +68,30 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           results.push(added ? `✓ ${p.name}` : `✗ ${p.name} (כבר קיים)`);
         }
         reply = `תוצאות הוספת אנשים:\n${results.join('\n')}`;
+        break;
+      }
+
+      case 'update_person': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        const people = getAllPeople();
+        const resolved = resolvePerson(intent.name, people);
+        if (resolved.status === 'not_found') {
+          reply = `לא נמצא אדם בשם "${intent.name}".`;
+        } else if (resolved.status === 'ambiguous') {
+          reply = `נמצאו מספר אנשים דומים:\n${resolved.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
+        } else {
+          updatePerson(resolved.item.id, {
+            department: intent.department,
+            crew: intent.crew,
+            role: intent.role,
+          });
+          const changes = [
+            intent.department && `מחלקה: ${intent.department}`,
+            intent.crew && `צוות: ${intent.crew}`,
+            intent.role && `תפקיד: ${intent.role}`,
+          ].filter(Boolean).join(', ');
+          reply = `✅ ${resolved.item.full_name} עודכן — ${changes}.`;
+        }
         break;
       }
 

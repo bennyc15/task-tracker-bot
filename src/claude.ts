@@ -54,15 +54,29 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
             type: 'object',
             properties: {
               name: { type: 'string', description: 'שם מלא' },
-              department: { type: 'string', description: 'מחלקה' },
-              crew: { type: 'string', description: 'צוות (תת-יחידה בתוך המחלקה, למשל "צוות 1א")' },
-              role: { type: 'string', description: 'תפקיד' },
+              department: { type: 'string', description: 'מחלקה (אופציונלי)' },
+              crew: { type: 'string', description: 'צוות (תת-יחידה בתוך המחלקה, למשל "צוות 1א") (אופציונלי)' },
+              role: { type: 'string', description: 'תפקיד (אופציונלי)' },
             },
-            required: ['name', 'department', 'crew', 'role'],
+            required: ['name'],
           },
         },
       },
       required: ['people'],
+    },
+  },
+  {
+    name: 'update_person',
+    description: 'עדכן שדות של אדם קיים — מחלקה, צוות, תפקיד. השתמש כאשר המשתמש רוצה לשנות פרטים של אדם שכבר קיים',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'שם האדם לעדכון' },
+        department: { type: 'string', description: 'מחלקה חדשה (אופציונלי)' },
+        crew: { type: 'string', description: 'צוות חדש (אופציונלי)' },
+        role: { type: 'string', description: 'תפקיד חדש (אופציונלי)' },
+      },
+      required: ['name'],
     },
   },
   {
@@ -271,6 +285,14 @@ export async function parseIntent(message: string, isAdmin: boolean): Promise<In
       return { type: 'remove_task', task_name: input.task_name as string };
     case 'add_people':
       return { type: 'add_people', people: input.people as Array<{ name: string; department: string; crew: string; role: string }> };
+    case 'update_person':
+      return {
+        type: 'update_person',
+        name: input.name as string,
+        department: input.department as string | undefined,
+        crew: input.crew as string | undefined,
+        role: input.role as string | undefined,
+      };
     case 'remove_person':
       return { type: 'remove_person', name: input.name as string };
     case 'record_completion':

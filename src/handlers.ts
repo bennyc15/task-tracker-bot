@@ -258,6 +258,11 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         break;
       }
 
+      case 'text_response': {
+        reply = intent.text;
+        break;
+      }
+
       default:
         reply = 'מצטער, לא הצלחתי לעבד את הבקשה.';
     }

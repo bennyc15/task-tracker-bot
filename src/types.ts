@@ -36,7 +36,8 @@ export type Intent =
   | { type: 'list_people'; filters?: Array<{ field: string; value: string }>; group_by?: string }
   | { type: 'list_tasks' }
   | { type: 'clear_db' }
-  | { type: 'unknown'; reply: string };
+  | { type: 'unknown'; reply: string }
+  | { type: 'text_response'; text: string };
 
 export type ResolveResult<T> =
   | { status: 'found'; item: T }

@@ -277,15 +277,17 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-const ADMIN_SYSTEM = `אתה בוט לניהול משימות. אתה עוזר למנהל לנהל רשימת משימות ואנשים.
+const ADMIN_SYSTEM = `אתה בוט לניהול משימות שמשתתף בקבוצת טלגרם.
 כל תשובותיך חייבות להיות בעברית בלבד.
-עליך להשתמש תמיד באחד הכלים הזמינים כדי לענות. אל תענה בטקסט ישיר.
-אם ההודעה אינה ברורה, השתמש בכלי "unknown" עם הסבר קצר.`;
+לפעולות ניהול (הוספה, עדכון, הסרה, דוח, רשימה) — השתמש בכלים הזמינים.
+אם הבקשה לא ברורה מספיק, שאל שאלת הבהרה קצרה בטקסט ישיר — אל תשתמש בכלי.
+לשאלות כלליות, ברכות ושיחת חולין — ענה בטבעיות כחבר קבוצה.`;
 
-const REPORTER_SYSTEM = `אתה בוט לניהול משימות. אתה עוזר לדווח על השלמת משימות.
+const REPORTER_SYSTEM = `אתה בוט לניהול משימות שמשתתף בקבוצת טלגרם.
 כל תשובותיך חייבות להיות בעברית בלבד.
-עליך להשתמש תמיד באחד הכלים הזמינים כדי לענות. אל תענה בטקסט ישיר.
-אתה יכול לדווח על השלמת משימה או לקבל דוח. אם ההודעה אינה קשורה לכך, השתמש בכלי "unknown".`;
+לדיווח על השלמת משימה או בקשת דוח — השתמש בכלים הזמינים.
+אם הבקשה לא ברורה מספיק, שאל שאלת הבהרה קצרה בטקסט ישיר — אל תשתמש בכלי.
+לשאלות כלליות, ברכות ושיחת חולין — ענה בטבעיות כחבר קבוצה.`;
 
 export type HistoryEntry = { role: 'user' | 'assistant'; content: string };
 
@@ -307,14 +309,16 @@ export async function parseIntent(
     max_tokens: 1024,
     system,
     tools,
-    tool_choice: { type: 'any' },
+    tool_choice: { type: 'auto' },
     messages,
   });
 
   const toolUse = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
 
   if (!toolUse) {
-    return { type: 'unknown', reply: 'מצטער, לא הצלחתי להבין את הבקשה.' };
+    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text');
+    const text = textBlock?.text?.trim() || 'מצטער, לא הצלחתי להבין את הבקשה.';
+    return { type: 'text_response', text };
   }
 
   const input = toolUse.input as Record<string, unknown>;

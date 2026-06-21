@@ -1,7 +1,7 @@
-import { getAllPeople, getAllTasks, isCompleted } from './db';
+import { getAllPeople, getPeopleBy, getAllTasks, isCompleted } from './db';
 
-export function generateReport(): string {
-  const people = getAllPeople();
+export function generateReport(filterField?: string, filterValue?: string): string {
+  const people = filterField && filterValue ? getPeopleBy(filterField, filterValue) : getAllPeople();
   const tasks = getAllTasks();
 
   if (people.length === 0) {
@@ -12,7 +12,10 @@ export function generateReport(): string {
     return 'אין משימות ברשימה עדיין.';
   }
 
-  const lines: string[] = ['📊 *דוח השלמת משימות*', ''];
+  const title = filterField && filterValue
+    ? `📊 *דוח השלמת משימות — ${filterValue}*`
+    : '📊 *דוח השלמת משימות*';
+  const lines: string[] = [title, ''];
 
   for (const person of people) {
     const relevantTasks = tasks.filter(t => {

@@ -30,7 +30,7 @@ export type Intent =
   | { type: 'add_people'; people: Array<{ name: string; department: string; role: string }> }
   | { type: 'remove_person'; name: string }
   | { type: 'record_completion'; person_name: string; task_name: string }
-  | { type: 'get_report' }
+  | { type: 'get_report'; filter_field?: string; filter_value?: string }
   | { type: 'list_people'; filter_field?: string; filter_value?: string; group_by?: string }
   | { type: 'list_tasks' }
   | { type: 'clear_db' }

@@ -89,10 +89,20 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'get_report',
-    description: 'הצג דוח על השלמת משימות',
+    description: 'הצג דוח על השלמת משימות. אפשר לסנן לפי מחלקה או תפקיד ספציפי באמצעות filter_field ו-filter_value',
     input_schema: {
       type: 'object',
-      properties: {},
+      properties: {
+        filter_field: {
+          type: 'string',
+          enum: ['department', 'role'],
+          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה או תפקיד ספציפי',
+        },
+        filter_value: {
+          type: 'string',
+          description: 'הערך הספציפי לסינון, למשל "מחלקה 3" או "מנהל"',
+        },
+      },
     },
   },
   {
@@ -162,10 +172,20 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'get_report',
-    description: 'הצג דוח על השלמת משימות',
+    description: 'הצג דוח על השלמת משימות. אפשר לסנן לפי מחלקה או תפקיד ספציפי באמצעות filter_field ו-filter_value',
     input_schema: {
       type: 'object',
-      properties: {},
+      properties: {
+        filter_field: {
+          type: 'string',
+          enum: ['department', 'role'],
+          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה או תפקיד ספציפי',
+        },
+        filter_value: {
+          type: 'string',
+          description: 'הערך הספציפי לסינון, למשל "מחלקה 3" או "מנהל"',
+        },
+      },
     },
   },
   {
@@ -259,7 +279,11 @@ export async function parseIntent(message: string, isAdmin: boolean): Promise<In
         task_name: input.task_name as string,
       };
     case 'get_report':
-      return { type: 'get_report' };
+      return {
+        type: 'get_report',
+        filter_field: input.filter_field as string | undefined,
+        filter_value: input.filter_value as string | undefined,
+      };
     case 'list_people':
       return {
         type: 'list_people',

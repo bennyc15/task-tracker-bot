@@ -86,12 +86,32 @@ export function getPeopleByFilters(filters: Array<{ field: string; value: string
   const allowed = ['full_name', 'department', 'crew', 'role'];
   const valid = filters.filter(f => allowed.includes(f.field));
   if (valid.length === 0) return getAllPeople();
-  // full_name uses LIKE for partial match; structured fields use exact match
-  const whereClauses = valid.map(f => f.field === 'full_name' ? `${f.field} LIKE ?` : `LOWER(${f.field}) = LOWER(?)`).join(' AND ');
-  const values = valid.map(f => f.field === 'full_name' ? `%${f.value}%` : f.value);
+
+  // Try exact match for structured fields first; if no results, fall back to LIKE
+  const buildQuery = (useLike: boolean) => {
+    const where = valid.map(f =>
+      f.field === 'full_name'
+        ? `full_name LIKE ?`
+        : useLike ? `LOWER(${f.field}) LIKE LOWER(?)` : `LOWER(${f.field}) = LOWER(?)`
+    ).join(' AND ');
+    const vals = valid.map(f =>
+      f.field === 'full_name' ? `%${f.value}%` : useLike ? `%${f.value}%` : f.value
+    );
+    return { where, vals };
+  };
+
+  const exact = buildQuery(false);
+  const exactResults = queryPeople(exact.where, exact.vals);
+  if (exactResults.length > 0) return exactResults;
+
+  const like = buildQuery(true);
+  return queryPeople(like.where, like.vals);
+}
+
+function queryPeople(where: string, values: (string | number)[]): Person[] {
   const rows: Person[] = [];
   const stmt = getDb().prepare(
-    `SELECT id, full_name, department, crew, role FROM people WHERE ${whereClauses} ORDER BY full_name`
+    `SELECT id, full_name, department, crew, role FROM people WHERE ${where} ORDER BY full_name`
   );
   stmt.bind(values);
   while (stmt.step()) {
@@ -111,24 +131,15 @@ export function getPeopleByFilters(filters: Array<{ field: string; value: string
 export function getPeopleBy(field: string, value: string): Person[] {
   const allowed = ['full_name', 'department', 'crew', 'role'];
   if (!allowed.includes(field)) return getAllPeople();
-  const rows: Person[] = [];
-  const isName = field === 'full_name';
-  const stmt = getDb().prepare(
-    `SELECT id, full_name, department, crew, role FROM people WHERE ${isName ? `${field} LIKE ?` : `LOWER(${field}) = LOWER(?)`} ORDER BY full_name`
-  );
-  stmt.bind([isName ? `%${value}%` : value]);
-  while (stmt.step()) {
-    const row = stmt.getAsObject() as { id: number; full_name: string; department: string; crew: string; role: string };
-    rows.push({
-      id: Number(row.id),
-      full_name: String(row.full_name),
-      department: String(row.department),
-      crew: String(row.crew),
-      role: String(row.role),
-    });
+
+  if (field === 'full_name') {
+    return queryPeople(`full_name LIKE ?`, [`%${value}%`]);
   }
-  stmt.free();
-  return rows;
+
+  // Structured fields: try exact first, fall back to LIKE
+  const exact = queryPeople(`LOWER(${field}) = LOWER(?)`, [value]);
+  if (exact.length > 0) return exact;
+  return queryPeople(`LOWER(${field}) LIKE LOWER(?)`, [`%${value}%`]);
 }
 
 export function addPerson(fullName: string, department: string, crew: string, role: string): boolean {

@@ -227,8 +227,21 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'export_excel',
+    description: 'ייצא את כל הנתונים לקובץ אקסל — רשימת אנשים ומטריצת השלמות. השתמש כאשר מבקשים "אקסל", "ייצוא", "קובץ"',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
     name: 'list_tasks',
     description: 'הצג את רשימת המשימות הרשומות במערכת',
+    input_schema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'clear_completions',
+    description: 'מחק את כל ההשלמות הרשומות — השתמש כאשר רוצים לאפס את הדוח / "אף אחד לא ביצע כלום" / "תסיר את כל ההשלמות". האנשים והמשימות נשארים.',
     input_schema: {
       type: 'object',
       properties: {},
@@ -409,6 +422,11 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'export_excel',
+    description: 'ייצא את כל הנתונים לקובץ אקסל — רשימת אנשים ומטריצת השלמות. השתמש כאשר מבקשים "אקסל", "ייצוא", "קובץ"',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
     name: 'list_tasks',
     description: 'הצג את רשימת המשימות הרשומות במערכת',
     input_schema: {
@@ -531,6 +549,8 @@ export async function parseIntent(
         task_name: input.task_name as string,
         show: input.show as 'completed' | 'missing' | 'all',
       };
+    case 'export_excel':
+      return { type: 'export_excel' };
     case 'list_tasks':
       return { type: 'list_tasks' };
     case 'clear_db':

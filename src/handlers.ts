@@ -1,6 +1,7 @@
 import { parseIntent, HistoryEntry } from './claude';
 import { generateReport } from './report';
-import { sendMessage } from './telegram';
+import { generateExcel } from './export';
+import { sendMessage, sendDocument } from './telegram';
 import { resolvePerson, resolveTask, searchPeopleByName } from './resolver';
 import {
   getAllPeople,
@@ -219,6 +220,15 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         reply = removed
           ? `✅ בוטל רישום ההשלמה של "${taskResult.item.name}" עבור ${personResult.item.full_name}.`
           : `${personResult.item.full_name} לא היה רשום כמי שהשלים את "${taskResult.item.name}".`;
+        break;
+      }
+
+      case 'export_excel': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        const buf = await generateExcel();
+        const date = new Date().toISOString().slice(0, 10);
+        await sendDocument(msg.chatId, buf, `report-${date}.xlsx`);
+        reply = '📎 קובץ האקסל נשלח.';
         break;
       }
 

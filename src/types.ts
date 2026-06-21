@@ -37,7 +37,9 @@ export type Intent =
   | { type: 'get_report'; groups?: Array<{ filter_field: string; filter_value: string }> }
   | { type: 'list_people'; filters?: Array<{ field: string; value: string }>; group_by?: string }
   | { type: 'task_roster'; task_name: string; show: 'completed' | 'missing' | 'all' }
+  | { type: 'export_excel' }
   | { type: 'list_tasks' }
+  | { type: 'clear_completions' }
   | { type: 'clear_db' }
   | { type: 'add_instruction'; instruction: string }
   | { type: 'list_instructions' }

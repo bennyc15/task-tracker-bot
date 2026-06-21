@@ -1,4 +1,4 @@
-import { Bot } from 'grammy';
+import { Bot, InputFile } from 'grammy';
 import { IncomingMessage } from './types';
 
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN!);
@@ -33,6 +33,10 @@ export async function sendMessage(chatId: string, text: string): Promise<void> {
       await bot.api.sendMessage(chatId, chunk);
     }
   }
+}
+
+export async function sendDocument(chatId: string, buffer: Buffer, filename: string): Promise<void> {
+  await bot.api.sendDocument(chatId, new InputFile(buffer, filename));
 }
 
 export function startPolling(onMessage: (msg: IncomingMessage) => Promise<void>): void {

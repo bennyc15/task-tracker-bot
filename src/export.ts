@@ -21,8 +21,9 @@ export async function generateExcel(): Promise<Buffer> {
   for (const person of people) {
     const cells: (string | number)[] = [person.full_name, person.department, person.crew, person.role];
     for (const task of tasks) {
-      const relevant = !task.required_role ||
-        task.required_role.split(',').map(r => r.trim()).includes(person.role);
+      const required = task.required_role ? task.required_role.split(',').map(r => r.trim()) : [];
+      const personRoles = person.role.split(',').map(r => r.trim());
+      const relevant = required.length === 0 || required.some(r => personRoles.includes(r));
       if (!relevant) {
         cells.push('-');
       } else {

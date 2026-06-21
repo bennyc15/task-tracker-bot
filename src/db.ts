@@ -90,30 +90,43 @@ export function getAllPeople(): Person[] {
   return rows;
 }
 
+function roleClause(value: string): { where: string; vals: string[] } {
+  // matches single role or role within a comma-separated list
+  return {
+    where: `(role = ? OR role LIKE ? OR role LIKE ? OR role LIKE ?)`,
+    vals: [value, `${value},%`, `%,${value}`, `%,${value},%`],
+  };
+}
+
 export function getPeopleByFilters(filters: Array<{ field: string; value: string }>): Person[] {
   const allowed = ['full_name', 'department', 'crew', 'role'];
   const valid = filters.filter(f => allowed.includes(f.field));
   if (valid.length === 0) return getAllPeople();
 
-  // Try exact match for structured fields first; if no results, fall back to LIKE
   const buildQuery = (useLike: boolean) => {
-    const where = valid.map(f =>
-      f.field === 'full_name'
-        ? `full_name LIKE ?`
-        : useLike ? `LOWER(${f.field}) LIKE LOWER(?)` : `LOWER(${f.field}) = LOWER(?)`
-    ).join(' AND ');
-    const vals = valid.map(f =>
-      f.field === 'full_name' ? `%${f.value}%` : useLike ? `%${f.value}%` : f.value
-    );
-    return { where, vals };
+    const whereParts: string[] = [];
+    const vals: string[] = [];
+    for (const f of valid) {
+      if (f.field === 'full_name') {
+        whereParts.push(`full_name LIKE ?`);
+        vals.push(`%${f.value}%`);
+      } else if (f.field === 'role') {
+        const rc = roleClause(f.value);
+        whereParts.push(rc.where);
+        vals.push(...rc.vals);
+      } else {
+        whereParts.push(useLike ? `LOWER(${f.field}) LIKE LOWER(?)` : `LOWER(${f.field}) = LOWER(?)`);
+        vals.push(useLike ? `%${f.value}%` : f.value);
+      }
+    }
+    return { where: whereParts.join(' AND '), vals };
   };
 
   const exact = buildQuery(false);
   const exactResults = queryPeople(exact.where, exact.vals);
   if (exactResults.length > 0) return exactResults;
 
-  const like = buildQuery(true);
-  return queryPeople(like.where, like.vals);
+  return queryPeople(...Object.values(buildQuery(true)) as [string, string[]]);
 }
 
 function queryPeople(where: string, values: (string | number)[]): Person[] {
@@ -144,7 +157,12 @@ export function getPeopleBy(field: string, value: string): Person[] {
     return queryPeople(`full_name LIKE ?`, [`%${value}%`]);
   }
 
-  // Structured fields: try exact first, fall back to LIKE
+  if (field === 'role') {
+    const rc = roleClause(value);
+    return queryPeople(rc.where, rc.vals);
+  }
+
+  // department, crew: try exact first, fall back to LIKE
   const exact = queryPeople(`LOWER(${field}) = LOWER(?)`, [value]);
   if (exact.length > 0) return exact;
   return queryPeople(`LOWER(${field}) LIKE LOWER(?)`, [`%${value}%`]);

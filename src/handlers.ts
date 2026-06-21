@@ -82,13 +82,13 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
             updatePerson(existing.item.id, {
               department: p.department,
               crew: p.crew,
-              role: p.role,
+              role: p.roles?.join(','),
             });
             results.push(`✓ ${existing.item.full_name} (עודכן)`);
           } else if (existing.status === 'ambiguous') {
             results.push(`✗ "${p.name}" — מספר תוצאות דומות: ${existing.candidates.join(', ')}`);
           } else {
-            const added = addPerson(p.name, p.department ?? '', p.crew ?? '', p.role ?? '');
+            const added = addPerson(p.name, p.department ?? '', p.crew ?? '', p.roles?.join(',') ?? '');
             results.push(added ? `✓ ${p.name} (נוסף)` : `✗ ${p.name} (כבר קיים בדיוק — בדוק שם)`);
           }
         }
@@ -107,13 +107,14 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           } else if (resolved.status === 'ambiguous') {
             results.push(`✗ "${p.name}" — מספר תוצאות: ${resolved.candidates.join(', ')}`);
           } else {
-            updatePerson(resolved.item.id, { full_name: p.full_name, department: p.department, crew: p.crew, role: p.role });
+            const rolesStr = p.roles?.join(',');
+            updatePerson(resolved.item.id, { full_name: p.full_name, department: p.department, crew: p.crew, role: rolesStr });
             const newName = p.full_name ?? resolved.item.full_name;
             const changes = [
               p.full_name && `שם: ${p.full_name}`,
               p.department && `מחלקה: ${p.department}`,
               p.crew && `צוות: ${p.crew}`,
-              p.role && `תפקיד: ${p.role}`,
+              rolesStr && `תפקיד: ${rolesStr}`,
             ].filter(Boolean).join(', ');
             results.push(`✅ ${newName} — ${changes || '(אין שינויים)'}`);
           }
@@ -181,8 +182,9 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         const group = intent.filters.length > 0 ? getPeopleByFilters(intent.filters) : getAllPeople();
         const relevant = group.filter(p => {
           if (!task.required_role) return true;
-          const roles = task.required_role.split(',').map(r => r.trim());
-          return roles.includes(p.role);
+          const required = task.required_role.split(',').map(r => r.trim());
+          const personRoles = p.role.split(',').map(r => r.trim());
+          return required.some(r => personRoles.includes(r));
         });
         if (relevant.length === 0) { reply = 'לא נמצאו אנשים מתאימים.'; break; }
         let count = 0;
@@ -254,8 +256,9 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         const allPeople = getAllPeople();
         const relevant = allPeople.filter(p => {
           if (!task.required_role) return true;
-          const roles = task.required_role.split(',').map(r => r.trim());
-          return roles.includes(p.role);
+          const required = task.required_role.split(',').map(r => r.trim());
+          const personRoles = p.role.split(',').map(r => r.trim());
+          return required.some(r => personRoles.includes(r));
         });
         const completed = relevant.filter(p => isCompleted(p.id, task.id));
         const missing = relevant.filter(p => !isCompleted(p.id, task.id));

@@ -57,7 +57,11 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
               name: { type: 'string', description: 'שם מלא' },
               department: { type: 'string', description: 'מחלקה (אופציונלי)' },
               crew: { type: 'string', description: 'צוות (תת-יחידה בתוך המחלקה, למשל "צוות 1א") (אופציונלי)' },
-              role: { type: 'string', description: 'תפקיד (אופציונלי)' },
+              roles: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'רשימת תפקידים — אדם יכול להיות בעל מספר תפקידים (אופציונלי)',
+              },
             },
             required: ['name'],
           },
@@ -68,7 +72,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'update_people',
-    description: 'עדכן שדות של אנשים קיימים — שם מלא, מחלקה, צוות, תפקיד. השתמש תמיד בכלי זה גם אם יש אדם אחד בלבד',
+    description: 'עדכן שדות של אנשים קיימים — שם מלא, מחלקה, צוות, תפקידים. השתמש תמיד בכלי זה גם אם יש אדם אחד בלבד',
     input_schema: {
       type: 'object',
       properties: {
@@ -82,7 +86,11 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
               full_name: { type: 'string', description: 'שם מלא חדש (אופציונלי) — השתמש כאשר רוצים לשנות את השם במערכת' },
               department: { type: 'string', description: 'מחלקה חדשה (אופציונלי)' },
               crew: { type: 'string', description: 'צוות חדש (אופציונלי)' },
-              role: { type: 'string', description: 'תפקיד חדש (אופציונלי)' },
+              roles: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'רשימת תפקידים חדשה (אופציונלי) — מחליפה את כל התפקידים הקיימים',
+              },
             },
             required: ['name'],
           },
@@ -516,11 +524,11 @@ export async function parseIntent(
     case 'remove_task':
       return { type: 'remove_task', task_name: input.task_name as string };
     case 'add_people':
-      return { type: 'add_people', people: input.people as Array<{ name: string; department: string; crew: string; role: string }> };
+      return { type: 'add_people', people: input.people as Array<{ name: string; department: string; crew: string; roles: string[] }> };
     case 'update_people':
       return {
         type: 'update_people',
-        people: input.people as Array<{ name: string; full_name?: string; department?: string; crew?: string; role?: string }>,
+        people: input.people as Array<{ name: string; full_name?: string; department?: string; crew?: string; roles?: string[] }>,
       };
     case 'remove_person':
       return { type: 'remove_person', name: input.name as string };

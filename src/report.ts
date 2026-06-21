@@ -12,8 +12,9 @@ function reportSection(people: Person[], tasks: ReturnType<typeof getAllTasks>, 
   for (const person of people) {
     const relevantTasks = tasks.filter(t => {
       if (!t.required_role) return true;
-      const roles = t.required_role.split(',').map(r => r.trim());
-      return roles.includes(person.role);
+      const required = t.required_role.split(',').map(r => r.trim());
+      const personRoles = person.role.split(',').map(r => r.trim());
+      return required.some(r => personRoles.includes(r));
     });
     if (relevantTasks.length === 0) continue;
 

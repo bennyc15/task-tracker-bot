@@ -34,7 +34,7 @@ export type Intent =
   | { type: 'record_completion'; person_name: string; task_name: string }
   | { type: 'remove_completion'; person_name: string; task_name: string }
   | { type: 'bulk_completion'; filters: Array<{ field: string; value: string }>; task_name: string; undo?: boolean }
-  | { type: 'get_report'; filter_field?: string; filter_value?: string }
+  | { type: 'get_report'; groups?: Array<{ filter_field: string; filter_value: string }> }
   | { type: 'list_people'; filters?: Array<{ field: string; value: string }>; group_by?: string }
   | { type: 'task_roster'; task_name: string; show: 'completed' | 'missing' | 'all' }
   | { type: 'list_tasks' }

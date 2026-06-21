@@ -151,18 +151,28 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'get_report',
-    description: 'הצג דוח על השלמת משימות. אפשר לסנן לפי מחלקה או תפקיד ספציפי באמצעות filter_field ו-filter_value',
+    description: 'הצג דוח על השלמת משימות. אפשר לבקש מספר קבוצות בבת אחת (למשל "צוות ד, מחלקה 1 ומחלקה 6"). ללא groups — דוח כללי לכולם.',
     input_schema: {
       type: 'object',
       properties: {
-        filter_field: {
-          type: 'string',
-          enum: ['department', 'crew', 'role', 'full_name'],
-          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות, תפקיד או אדם ספציפי',
-        },
-        filter_value: {
-          type: 'string',
-          description: 'הערך הספציפי לסינון, למשל "מחלקה 3" או "מנהל"',
+        groups: {
+          type: 'array',
+          description: 'רשימת קבוצות לדוח — כל קבוצה היא שדה+ערך. השאר ריק לדוח כללי.',
+          items: {
+            type: 'object',
+            properties: {
+              filter_field: {
+                type: 'string',
+                enum: ['department', 'crew', 'role', 'full_name'],
+                description: 'שדה הסינון',
+              },
+              filter_value: {
+                type: 'string',
+                description: 'הערך לסינון',
+              },
+            },
+            required: ['filter_field', 'filter_value'],
+          },
         },
       },
     },
@@ -323,18 +333,28 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'get_report',
-    description: 'הצג דוח על השלמת משימות. אפשר לסנן לפי מחלקה או תפקיד ספציפי באמצעות filter_field ו-filter_value',
+    description: 'הצג דוח על השלמת משימות. אפשר לבקש מספר קבוצות בבת אחת (למשל "צוות ד, מחלקה 1 ומחלקה 6"). ללא groups — דוח כללי לכולם.',
     input_schema: {
       type: 'object',
       properties: {
-        filter_field: {
-          type: 'string',
-          enum: ['department', 'crew', 'role', 'full_name'],
-          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות, תפקיד או אדם ספציפי',
-        },
-        filter_value: {
-          type: 'string',
-          description: 'הערך הספציפי לסינון, למשל "מחלקה 3" או "מנהל"',
+        groups: {
+          type: 'array',
+          description: 'רשימת קבוצות לדוח — כל קבוצה היא שדה+ערך. השאר ריק לדוח כללי.',
+          items: {
+            type: 'object',
+            properties: {
+              filter_field: {
+                type: 'string',
+                enum: ['department', 'crew', 'role', 'full_name'],
+                description: 'שדה הסינון',
+              },
+              filter_value: {
+                type: 'string',
+                description: 'הערך לסינון',
+              },
+            },
+            required: ['filter_field', 'filter_value'],
+          },
         },
       },
     },
@@ -497,8 +517,7 @@ export async function parseIntent(
     case 'get_report':
       return {
         type: 'get_report',
-        filter_field: input.filter_field as string | undefined,
-        filter_value: input.filter_value as string | undefined,
+        groups: input.groups as Array<{ filter_field: string; filter_value: string }> | undefined,
       };
     case 'list_people':
       return {

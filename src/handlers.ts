@@ -223,7 +223,7 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
       }
 
       case 'get_report': {
-        reply = generateReport(intent.filter_field, intent.filter_value);
+        reply = generateReport(intent.groups);
         break;
       }
 

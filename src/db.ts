@@ -86,8 +86,9 @@ export function getPeopleByFilters(filters: Array<{ field: string; value: string
   const allowed = ['full_name', 'department', 'crew', 'role'];
   const valid = filters.filter(f => allowed.includes(f.field));
   if (valid.length === 0) return getAllPeople();
-  const whereClauses = valid.map(f => `${f.field} LIKE ?`).join(' AND ');
-  const values = valid.map(f => `%${f.value}%`);
+  // full_name uses LIKE for partial match; structured fields use exact match
+  const whereClauses = valid.map(f => f.field === 'full_name' ? `${f.field} LIKE ?` : `LOWER(${f.field}) = LOWER(?)`).join(' AND ');
+  const values = valid.map(f => f.field === 'full_name' ? `%${f.value}%` : f.value);
   const rows: Person[] = [];
   const stmt = getDb().prepare(
     `SELECT id, full_name, department, crew, role FROM people WHERE ${whereClauses} ORDER BY full_name`
@@ -111,10 +112,11 @@ export function getPeopleBy(field: string, value: string): Person[] {
   const allowed = ['full_name', 'department', 'crew', 'role'];
   if (!allowed.includes(field)) return getAllPeople();
   const rows: Person[] = [];
+  const isName = field === 'full_name';
   const stmt = getDb().prepare(
-    `SELECT id, full_name, department, crew, role FROM people WHERE ${field} LIKE ? ORDER BY full_name`
+    `SELECT id, full_name, department, crew, role FROM people WHERE ${isName ? `${field} LIKE ?` : `LOWER(${field}) = LOWER(?)`} ORDER BY full_name`
   );
-  stmt.bind([`%${value}%`]);
+  stmt.bind([isName ? `%${value}%` : value]);
   while (stmt.step()) {
     const row = stmt.getAsObject() as { id: number; full_name: string; department: string; crew: string; role: string };
     rows.push({

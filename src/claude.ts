@@ -213,7 +213,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'task_roster',
-    description: 'הצג מי ביצע / לא ביצע משימה ספציפית. השתמש כאשר שואלים "מי ביצע X", "מי לא ביצע X", "כמה אנשים עשו X"',
+    description: 'הצג מי ביצע / לא ביצע משימה ספציפית. show="completed" — רק מי שביצע ("רק השלמות", "מי ביצע", "רק מי שעשה"). show="missing" — רק מי שלא ביצע ("מי חסר", "מי לא עשה"). show="all" — כולם עם סטטוס ("סטטוס כללי", "כמה אנשים", "מי ביצע ומי לא").',
     input_schema: {
       type: 'object',
       properties: {
@@ -221,7 +221,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
         show: {
           type: 'string',
           enum: ['completed', 'missing', 'all'],
-          description: '"completed" — מי ביצע, "missing" — מי לא ביצע, "all" — כולם עם סטטוס',
+          description: 'completed=רק מי שביצע | missing=רק מי שלא ביצע | all=כולם',
         },
       },
       required: ['task_name', 'show'],
@@ -408,7 +408,7 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'task_roster',
-    description: 'הצג מי ביצע / לא ביצע משימה ספציפית. השתמש כאשר שואלים "מי ביצע X", "מי לא ביצע X", "כמה אנשים עשו X"',
+    description: 'הצג מי ביצע / לא ביצע משימה ספציפית. show="completed" — רק מי שביצע ("רק השלמות", "מי ביצע", "רק מי שעשה"). show="missing" — רק מי שלא ביצע ("מי חסר", "מי לא עשה"). show="all" — כולם עם סטטוס ("סטטוס כללי", "כמה אנשים", "מי ביצע ומי לא").',
     input_schema: {
       type: 'object',
       properties: {
@@ -416,7 +416,7 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
         show: {
           type: 'string',
           enum: ['completed', 'missing', 'all'],
-          description: '"completed" — מי ביצע, "missing" — מי לא ביצע, "all" — כולם עם סטטוס',
+          description: 'completed=רק מי שביצע | missing=רק מי שלא ביצע | all=כולם',
         },
       },
       required: ['task_name', 'show'],

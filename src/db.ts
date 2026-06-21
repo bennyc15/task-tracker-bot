@@ -49,11 +49,13 @@ export async function initDb(): Promise<void> {
     );
   `);
 
+  db.run(`
     CREATE TABLE IF NOT EXISTS custom_instructions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       instruction TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+  `);
 
   // Migrate existing DB that may lack the new columns
   try { db.run(`ALTER TABLE people ADD COLUMN department TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }

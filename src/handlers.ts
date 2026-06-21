@@ -163,10 +163,21 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
 
       case 'list_people': {
         const { filter_field, filter_value, group_by } = intent;
-        const people =
-          filter_field && filter_value
-            ? getPeopleBy(filter_field, filter_value)
-            : getAllPeople();
+        let people: ReturnType<typeof getAllPeople>;
+        if (filter_field === 'full_name' && filter_value) {
+          const all = getAllPeople();
+          const resolved = resolvePerson(filter_value, all);
+          if (resolved.status === 'found') {
+            people = [resolved.item];
+          } else if (resolved.status === 'ambiguous') {
+            reply = `נמצאו מספר אנשים דומים:\n${resolved.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
+            break;
+          } else {
+            people = [];
+          }
+        } else {
+          people = filter_field && filter_value ? getPeopleBy(filter_field, filter_value) : getAllPeople();
+        }
 
         if (people.length === 0) {
           reply = filter_field && filter_value

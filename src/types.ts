@@ -1,0 +1,42 @@
+export interface Person {
+  id: number;
+  full_name: string;
+  department: string;
+  role: string;
+}
+
+export interface Task {
+  id: number;
+  name: string;
+  required_role: string;
+}
+
+export interface CompletionRow {
+  person_name: string;
+  task_name: string;
+  reported_at: string;
+}
+
+export interface IncomingMessage {
+  from: string;    // user ID — used for admin check
+  chatId: string;  // chat ID — used to send the reply (group or DM)
+  text: string;
+  messageId: string;
+}
+
+export type Intent =
+  | { type: 'add_tasks'; tasks: Array<{ name: string; required_roles: string[] }> }
+  | { type: 'remove_task'; task_name: string }
+  | { type: 'add_people'; people: Array<{ name: string; department: string; role: string }> }
+  | { type: 'remove_person'; name: string }
+  | { type: 'record_completion'; person_name: string; task_name: string }
+  | { type: 'get_report' }
+  | { type: 'list_people'; filter_field?: string; filter_value?: string; group_by?: string }
+  | { type: 'list_tasks' }
+  | { type: 'clear_db' }
+  | { type: 'unknown'; reply: string };
+
+export type ResolveResult<T> =
+  | { status: 'found'; item: T }
+  | { status: 'ambiguous'; candidates: string[] }
+  | { status: 'not_found' };

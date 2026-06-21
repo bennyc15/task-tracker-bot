@@ -1,0 +1,25 @@
+{
+  "name": "task-tracker-bot",
+  "version": "1.0.0",
+  "description": "Telegram task tracking bot with Hebrew support",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^5.2.1",
+    "fuse.js": "^7.0.0",
+    "grammy": "^1.44.0",
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/sql.js": "^1.4.9",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

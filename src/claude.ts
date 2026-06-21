@@ -120,8 +120,8 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
       properties: {
         filter_field: {
           type: 'string',
-          enum: ['department', 'crew', 'role'],
-          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות או תפקיד ספציפי',
+          enum: ['department', 'crew', 'role', 'full_name'],
+          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות, תפקיד או אדם ספציפי',
         },
         filter_value: {
           type: 'string',
@@ -213,8 +213,8 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
       properties: {
         filter_field: {
           type: 'string',
-          enum: ['department', 'crew', 'role'],
-          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות או תפקיד ספציפי',
+          enum: ['department', 'crew', 'role', 'full_name'],
+          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות, תפקיד או אדם ספציפי',
         },
         filter_value: {
           type: 'string',

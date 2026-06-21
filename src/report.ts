@@ -1,7 +1,16 @@
 import { getAllPeople, getPeopleBy, getAllTasks, isCompleted } from './db';
+import { resolvePerson } from './resolver';
 
 export function generateReport(filterField?: string, filterValue?: string): string {
-  const people = filterField && filterValue ? getPeopleBy(filterField, filterValue) : getAllPeople();
+  let people = getAllPeople();
+  if (filterField && filterValue) {
+    if (filterField === 'full_name') {
+      const resolved = resolvePerson(filterValue, people);
+      people = resolved.status === 'found' ? [resolved.item] : [];
+    } else {
+      people = getPeopleBy(filterField, filterValue);
+    }
+  }
   const tasks = getAllTasks();
 
   if (people.length === 0) {

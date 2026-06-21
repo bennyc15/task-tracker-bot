@@ -235,7 +235,7 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
       }
 
       case 'get_report': {
-        reply = generateReport(intent.groups);
+        reply = generateReport(intent.groups, intent.show ?? 'all');
         break;
       }
 

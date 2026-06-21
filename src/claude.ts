@@ -152,7 +152,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'get_report',
-    description: 'הצג דוח על השלמת משימות. אפשר לבקש מספר קבוצות בבת אחת (למשל "צוות ד, מחלקה 1 ומחלקה 6"). ללא groups — דוח כללי לכולם.',
+    description: 'הצג דוח על השלמת משימות. אפשר לבקש מספר קבוצות בבת אחת. show="completed" — רק מי שביצע משהו ("רק מה שבוצע", "רק השלמות"). show="missing" — רק מי שחסר לו משהו. show="all" (ברירת מחדל) — דוח מלא.',
     input_schema: {
       type: 'object',
       properties: {
@@ -174,6 +174,11 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
             },
             required: ['filter_field', 'filter_value'],
           },
+        },
+        show: {
+          type: 'string',
+          enum: ['all', 'completed', 'missing'],
+          description: 'completed=רק מי שביצע | missing=רק מי שחסר | all=כולם (ברירת מחדל)',
         },
       },
     },
@@ -347,7 +352,7 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'get_report',
-    description: 'הצג דוח על השלמת משימות. אפשר לבקש מספר קבוצות בבת אחת (למשל "צוות ד, מחלקה 1 ומחלקה 6"). ללא groups — דוח כללי לכולם.',
+    description: 'הצג דוח על השלמת משימות. אפשר לבקש מספר קבוצות בבת אחת. show="completed" — רק מי שביצע משהו ("רק מה שבוצע", "רק השלמות"). show="missing" — רק מי שחסר לו משהו. show="all" (ברירת מחדל) — דוח מלא.',
     input_schema: {
       type: 'object',
       properties: {
@@ -369,6 +374,11 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
             },
             required: ['filter_field', 'filter_value'],
           },
+        },
+        show: {
+          type: 'string',
+          enum: ['all', 'completed', 'missing'],
+          description: 'completed=רק מי שביצע | missing=רק מי שחסר | all=כולם (ברירת מחדל)',
         },
       },
     },
@@ -537,6 +547,7 @@ export async function parseIntent(
       return {
         type: 'get_report',
         groups: input.groups as Array<{ filter_field: string; filter_value: string }> | undefined,
+        show: input.show as 'all' | 'completed' | 'missing' | undefined,
       };
     case 'list_people':
       return {

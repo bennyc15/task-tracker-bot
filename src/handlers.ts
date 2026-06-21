@@ -1,10 +1,9 @@
-import { parseIntent } from './claude';
+import { parseIntent, HistoryEntry } from './claude';
 import { generateReport } from './report';
 import { sendMessage } from './telegram';
 import { resolvePerson, resolveTask } from './resolver';
 import {
   getAllPeople,
-  getPeopleBy,
   getPeopleByFilters,
   getAllTasks,
   addPerson,
@@ -25,12 +24,16 @@ function isAdmin(phone: string): boolean {
   return ADMIN_CHAT_IDS.has(phone);
 }
 
+const MAX_HISTORY = 6; // 3 exchanges
+const chatHistory = new Map<string, HistoryEntry[]>();
+
 export async function handleMessage(msg: IncomingMessage): Promise<void> {
   const admin = isAdmin(msg.from);
   let reply: string;
+  const history = chatHistory.get(msg.chatId) ?? [];
 
   try {
-    const intent = await parseIntent(msg.text, admin);
+    const intent = await parseIntent(msg.text, admin, history);
 
     switch (intent.type) {
       case 'add_tasks': {
@@ -262,6 +265,10 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
     console.error('handleMessage error:', err);
     reply = 'אירעה שגיאה. אנא נסה שוב מאוחר יותר.';
   }
+
+  history.push({ role: 'user', content: msg.text });
+  history.push({ role: 'assistant', content: reply });
+  chatHistory.set(msg.chatId, history.slice(-MAX_HISTORY));
 
   await sendMessage(msg.chatId, reply);
 }

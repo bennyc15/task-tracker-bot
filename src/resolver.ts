@@ -2,14 +2,29 @@ import Fuse from 'fuse.js';
 import { Person, Task, ResolveResult } from './types';
 
 export function searchPeopleByName(query: string, people: Person[]): Person[] {
-  // Broad substring match first
   const lower = query.toLowerCase();
+
+  // Word-prefix match: any word in the name starts with the query
+  const prefixMatch = people.filter(p =>
+    p.full_name.split(/\s+/).some(word => word.toLowerCase().startsWith(lower))
+  );
+  if (prefixMatch.length > 0) return prefixMatch;
+
+  // Substring match: query appears anywhere in the full name
   const substring = people.filter(p => p.full_name.toLowerCase().includes(lower));
   if (substring.length > 0) return substring;
 
-  // Fallback: fuzzy multi-match
-  const fuse = new Fuse(people, { keys: ['full_name'], threshold: 0.5, includeScore: true });
-  return fuse.search(query).map(r => r.item);
+  // Fuzzy match on each word of the name separately — catches Hebrew nickname variants
+  // (e.g. "בני" → "בינימין"). Strict per-word threshold to avoid false positives.
+  const wordFuse = new Fuse(
+    people.flatMap(p => p.full_name.split(/\s+/).map(word => ({ word, person: p }))),
+    { keys: ['word'], threshold: 0.3, includeScore: true }
+  );
+  const wordMatches = wordFuse.search(query)
+    .filter(r => (r.score ?? 1) < 0.3)
+    .map(r => r.item.person);
+  const unique = [...new Map(wordMatches.map(p => [p.id, p])).values()];
+  return unique;
 }
 
 function splitName(fullName: string): string[] {

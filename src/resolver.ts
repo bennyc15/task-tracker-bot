@@ -1,6 +1,17 @@
 import Fuse from 'fuse.js';
 import { Person, Task, ResolveResult } from './types';
 
+export function searchPeopleByName(query: string, people: Person[]): Person[] {
+  // Broad substring match first
+  const lower = query.toLowerCase();
+  const substring = people.filter(p => p.full_name.toLowerCase().includes(lower));
+  if (substring.length > 0) return substring;
+
+  // Fallback: fuzzy multi-match
+  const fuse = new Fuse(people, { keys: ['full_name'], threshold: 0.5, includeScore: true });
+  return fuse.search(query).map(r => r.item);
+}
+
 function splitName(fullName: string): string[] {
   return fullName.trim().split(/\s+/);
 }

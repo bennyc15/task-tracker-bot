@@ -1,7 +1,7 @@
 import { parseIntent, HistoryEntry } from './claude';
 import { generateReport } from './report';
 import { sendMessage } from './telegram';
-import { resolvePerson, resolveTask } from './resolver';
+import { resolvePerson, resolveTask, searchPeopleByName } from './resolver';
 import {
   getAllPeople,
   getPeopleByFilters,
@@ -174,15 +174,7 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
 
         if (nameFilter) {
           const all = otherFilters.length > 0 ? getPeopleByFilters(otherFilters) : getAllPeople();
-          const resolved = resolvePerson(nameFilter.value, all);
-          if (resolved.status === 'found') {
-            people = [resolved.item];
-          } else if (resolved.status === 'ambiguous') {
-            reply = `נמצאו מספר אנשים דומים:\n${resolved.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
-            break;
-          } else {
-            people = [];
-          }
+          people = searchPeopleByName(nameFilter.value, all);
         } else if (otherFilters.length > 0) {
           people = getPeopleByFilters(otherFilters);
         } else {

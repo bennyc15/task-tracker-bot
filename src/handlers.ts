@@ -63,9 +63,24 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
       case 'add_people': {
         if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
         const results: string[] = [];
+        const allPeople = getAllPeople();
         for (const p of intent.people) {
-          const added = addPerson(p.name, p.department, p.crew ?? '', p.role);
-          results.push(added ? `✓ ${p.name}` : `✗ ${p.name} (כבר קיים)`);
+          const added = addPerson(p.name, p.department ?? '', p.crew ?? '', p.role ?? '');
+          if (added) {
+            results.push(`✓ ${p.name} (נוסף)`);
+          } else {
+            const resolved = resolvePerson(p.name, allPeople);
+            if (resolved.status === 'found') {
+              updatePerson(resolved.item.id, {
+                department: p.department,
+                crew: p.crew,
+                role: p.role,
+              });
+              results.push(`✓ ${p.name} (עודכן)`);
+            } else {
+              results.push(`✗ ${p.name} (לא נמצא)`);
+            }
+          }
         }
         reply = `תוצאות הוספת אנשים:\n${results.join('\n')}`;
         break;

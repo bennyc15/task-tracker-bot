@@ -13,6 +13,7 @@ import {
   removeTask,
   recordCompletion,
   removeCompletion,
+  isCompleted,
   clearDb,
 } from './db';
 import { IncomingMessage } from './types';
@@ -191,6 +192,42 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
 
       case 'get_report': {
         reply = generateReport(intent.filter_field, intent.filter_value);
+        break;
+      }
+
+      case 'task_roster': {
+        const tasks = getAllTasks();
+        const taskResult = resolveTask(intent.task_name, tasks);
+        if (taskResult.status === 'not_found') {
+          reply = `לא נמצאה משימה בשם "${intent.task_name}".`;
+          break;
+        }
+        if (taskResult.status === 'ambiguous') {
+          reply = `נמצאו מספר משימות דומות:\n${taskResult.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
+          break;
+        }
+        const task = taskResult.item;
+        const allPeople = getAllPeople();
+        const relevant = allPeople.filter(p => {
+          if (!task.required_role) return true;
+          const roles = task.required_role.split(',').map(r => r.trim());
+          return roles.includes(p.role);
+        });
+        const completed = relevant.filter(p => isCompleted(p.id, task.id));
+        const missing = relevant.filter(p => !isCompleted(p.id, task.id));
+
+        const lines: string[] = [`📋 *${task.name}*`];
+        if (intent.show === 'completed' || intent.show === 'all') {
+          lines.push('', `✅ *ביצעו (${completed.length}):*`);
+          if (completed.length === 0) lines.push('  אף אחד עדיין');
+          else completed.forEach(p => lines.push(`  • ${p.full_name} (${[p.department, p.crew].filter(Boolean).join(' · ')})`));
+        }
+        if (intent.show === 'missing' || intent.show === 'all') {
+          lines.push('', `⚠️ *לא ביצעו (${missing.length}):*`);
+          if (missing.length === 0) lines.push('  כולם ביצעו!');
+          else missing.forEach(p => lines.push(`  • ${p.full_name} (${[p.department, p.crew].filter(Boolean).join(' · ')})`));
+        }
+        reply = lines.join('\n');
         break;
       }
 

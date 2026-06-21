@@ -176,6 +176,22 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'task_roster',
+    description: 'הצג מי ביצע / לא ביצע משימה ספציפית. השתמש כאשר שואלים "מי ביצע X", "מי לא ביצע X", "כמה אנשים עשו X"',
+    input_schema: {
+      type: 'object',
+      properties: {
+        task_name: { type: 'string', description: 'שם המשימה' },
+        show: {
+          type: 'string',
+          enum: ['completed', 'missing', 'all'],
+          description: '"completed" — מי ביצע, "missing" — מי לא ביצע, "all" — כולם עם סטטוס',
+        },
+      },
+      required: ['task_name', 'show'],
+    },
+  },
+  {
     name: 'list_tasks',
     description: 'הצג את רשימת המשימות הרשומות במערכת',
     input_schema: {
@@ -278,6 +294,22 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
           },
         },
       },
+    },
+  },
+  {
+    name: 'task_roster',
+    description: 'הצג מי ביצע / לא ביצע משימה ספציפית. השתמש כאשר שואלים "מי ביצע X", "מי לא ביצע X", "כמה אנשים עשו X"',
+    input_schema: {
+      type: 'object',
+      properties: {
+        task_name: { type: 'string', description: 'שם המשימה' },
+        show: {
+          type: 'string',
+          enum: ['completed', 'missing', 'all'],
+          description: '"completed" — מי ביצע, "missing" — מי לא ביצע, "all" — כולם עם סטטוס',
+        },
+      },
+      required: ['task_name', 'show'],
     },
   },
   {
@@ -386,6 +418,12 @@ export async function parseIntent(
         type: 'list_people',
         group_by: input.group_by as string | undefined,
         filters: input.filters as Array<{ field: string; value: string }> | undefined,
+      };
+    case 'task_roster':
+      return {
+        type: 'task_roster',
+        task_name: input.task_name as string,
+        show: input.show as 'completed' | 'missing' | 'all',
       };
     case 'list_tasks':
       return { type: 'list_tasks' };

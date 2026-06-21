@@ -68,7 +68,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'update_people',
-    description: 'עדכן שדות של אנשים קיימים — מחלקה, צוות, תפקיד. השתמש תמיד בכלי זה גם אם יש אדם אחד בלבד',
+    description: 'עדכן שדות של אנשים קיימים — שם מלא, מחלקה, צוות, תפקיד. השתמש תמיד בכלי זה גם אם יש אדם אחד בלבד',
     input_schema: {
       type: 'object',
       properties: {
@@ -78,7 +78,8 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
           items: {
             type: 'object',
             properties: {
-              name: { type: 'string', description: 'שם האדם לעדכון' },
+              name: { type: 'string', description: 'שם האדם לחיפוש (יכול להיות כינוי)' },
+              full_name: { type: 'string', description: 'שם מלא חדש (אופציונלי) — השתמש כאשר רוצים לשנות את השם במערכת' },
               department: { type: 'string', description: 'מחלקה חדשה (אופציונלי)' },
               crew: { type: 'string', description: 'צוות חדש (אופציונלי)' },
               role: { type: 'string', description: 'תפקיד חדש (אופציונלי)' },
@@ -509,7 +510,7 @@ export async function parseIntent(
     case 'update_people':
       return {
         type: 'update_people',
-        people: input.people as Array<{ name: string; department?: string; crew?: string; role?: string }>,
+        people: input.people as Array<{ name: string; full_name?: string; department?: string; crew?: string; role?: string }>,
       };
     case 'remove_person':
       return { type: 'remove_person', name: input.name as string };

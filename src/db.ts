@@ -160,9 +160,10 @@ export function addPerson(fullName: string, department: string, crew: string, ro
   }
 }
 
-export function updatePerson(id: number, fields: { department?: string; crew?: string; role?: string }): void {
+export function updatePerson(id: number, fields: { full_name?: string; department?: string; crew?: string; role?: string }): void {
   const updates: string[] = [];
   const values: string[] = [];
+  if (fields.full_name !== undefined) { updates.push('full_name = ?'); values.push(fields.full_name); }
   if (fields.department !== undefined) { updates.push('department = ?'); values.push(fields.department); }
   if (fields.crew !== undefined) { updates.push('crew = ?'); values.push(fields.crew); }
   if (fields.role !== undefined) { updates.push('role = ?'); values.push(fields.role); }

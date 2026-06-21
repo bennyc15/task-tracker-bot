@@ -76,21 +76,20 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         const results: string[] = [];
         const allPeople = getAllPeople();
         for (const p of intent.people) {
-          const added = addPerson(p.name, p.department ?? '', p.crew ?? '', p.role ?? '');
-          if (added) {
-            results.push(`✓ ${p.name} (נוסף)`);
+          // Fuzzy-check first to prevent creating duplicates with nickname variants
+          const existing = resolvePerson(p.name, allPeople);
+          if (existing.status === 'found') {
+            updatePerson(existing.item.id, {
+              department: p.department,
+              crew: p.crew,
+              role: p.role,
+            });
+            results.push(`✓ ${existing.item.full_name} (עודכן)`);
+          } else if (existing.status === 'ambiguous') {
+            results.push(`✗ "${p.name}" — מספר תוצאות דומות: ${existing.candidates.join(', ')}`);
           } else {
-            const resolved = resolvePerson(p.name, allPeople);
-            if (resolved.status === 'found') {
-              updatePerson(resolved.item.id, {
-                department: p.department,
-                crew: p.crew,
-                role: p.role,
-              });
-              results.push(`✓ ${p.name} (עודכן)`);
-            } else {
-              results.push(`✗ ${p.name} (לא נמצא)`);
-            }
+            const added = addPerson(p.name, p.department ?? '', p.crew ?? '', p.role ?? '');
+            results.push(added ? `✓ ${p.name} (נוסף)` : `✗ ${p.name} (כבר קיים בדיוק — בדוק שם)`);
           }
         }
         reply = `תוצאות הוספת אנשים:\n${results.join('\n')}`;
@@ -108,13 +107,15 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           } else if (resolved.status === 'ambiguous') {
             results.push(`✗ "${p.name}" — מספר תוצאות: ${resolved.candidates.join(', ')}`);
           } else {
-            updatePerson(resolved.item.id, { department: p.department, crew: p.crew, role: p.role });
+            updatePerson(resolved.item.id, { full_name: p.full_name, department: p.department, crew: p.crew, role: p.role });
+            const newName = p.full_name ?? resolved.item.full_name;
             const changes = [
+              p.full_name && `שם: ${p.full_name}`,
               p.department && `מחלקה: ${p.department}`,
               p.crew && `צוות: ${p.crew}`,
               p.role && `תפקיד: ${p.role}`,
             ].filter(Boolean).join(', ');
-            results.push(`✅ ${resolved.item.full_name} — ${changes}`);
+            results.push(`✅ ${newName} — ${changes || '(אין שינויים)'}`);
           }
         }
         reply = `תוצאות עדכון:\n${results.join('\n')}`;

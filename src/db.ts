@@ -196,6 +196,17 @@ export function clearDb(): void {
 
 // --- Completions ---
 
+export function removeCompletion(personId: number, taskId: number): boolean {
+  const stmt = getDb().prepare('SELECT 1 FROM completions WHERE person_id = ? AND task_id = ?');
+  stmt.bind([personId, taskId]);
+  const exists = stmt.step();
+  stmt.free();
+  if (!exists) return false;
+  getDb().run('DELETE FROM completions WHERE person_id = ? AND task_id = ?', [personId, taskId]);
+  save();
+  return true;
+}
+
 export function recordCompletion(personId: number, taskId: number, reportedBy: string): boolean {
   try {
     getDb().run(

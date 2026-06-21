@@ -12,6 +12,7 @@ import {
   addTask,
   removeTask,
   recordCompletion,
+  removeCompletion,
   clearDb,
 } from './db';
 import { IncomingMessage } from './types';
@@ -157,6 +158,34 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         reply = saved
           ? `✅ ${personResult.item.full_name} השלים את המשימה "${taskResult.item.name}".`
           : `${personResult.item.full_name} כבר רשום כמי שהשלים את "${taskResult.item.name}".`;
+        break;
+      }
+
+      case 'remove_completion': {
+        const people = getAllPeople();
+        const tasks = getAllTasks();
+        const personResult = resolvePerson(intent.person_name, people);
+        const taskResult = resolveTask(intent.task_name, tasks);
+        if (personResult.status === 'not_found') {
+          reply = `לא נמצא אדם בשם "${intent.person_name}".`;
+          break;
+        }
+        if (personResult.status === 'ambiguous') {
+          reply = `נמצאו מספר אנשים:\n${personResult.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
+          break;
+        }
+        if (taskResult.status === 'not_found') {
+          reply = `לא נמצאה משימה בשם "${intent.task_name}".`;
+          break;
+        }
+        if (taskResult.status === 'ambiguous') {
+          reply = `נמצאו מספר משימות:\n${taskResult.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
+          break;
+        }
+        const removed = removeCompletion(personResult.item.id, taskResult.item.id);
+        reply = removed
+          ? `✅ בוטל רישום ההשלמה של "${taskResult.item.name}" עבור ${personResult.item.full_name}.`
+          : `${personResult.item.full_name} לא היה רשום כמי שהשלים את "${taskResult.item.name}".`;
         break;
       }
 

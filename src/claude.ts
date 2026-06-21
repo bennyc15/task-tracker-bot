@@ -113,6 +113,18 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'remove_completion',
+    description: 'בטל רישום השלמת משימה עבור אדם — השתמש כאשר רוצים להוריד/לבטל/למחוק השלמה שנרשמה בטעות',
+    input_schema: {
+      type: 'object',
+      properties: {
+        person_name: { type: 'string', description: 'שם האדם' },
+        task_name: { type: 'string', description: 'שם המשימה לביטול' },
+      },
+      required: ['person_name', 'task_name'],
+    },
+  },
+  {
     name: 'get_report',
     description: 'הצג דוח על השלמת משימות. אפשר לסנן לפי מחלקה או תפקיד ספציפי באמצעות filter_field ו-filter_value',
     input_schema: {
@@ -201,6 +213,18 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
       properties: {
         person_name: { type: 'string', description: 'שם האדם' },
         task_name: { type: 'string', description: 'שם המשימה שהושלמה' },
+      },
+      required: ['person_name', 'task_name'],
+    },
+  },
+  {
+    name: 'remove_completion',
+    description: 'בטל רישום השלמת משימה עבור אדם — השתמש כאשר רוצים להוריד/לבטל/למחוק השלמה שנרשמה בטעות',
+    input_schema: {
+      type: 'object',
+      properties: {
+        person_name: { type: 'string', description: 'שם האדם' },
+        task_name: { type: 'string', description: 'שם המשימה לביטול' },
       },
       required: ['person_name', 'task_name'],
     },
@@ -342,6 +366,12 @@ export async function parseIntent(
     case 'record_completion':
       return {
         type: 'record_completion',
+        person_name: input.person_name as string,
+        task_name: input.task_name as string,
+      };
+    case 'remove_completion':
+      return {
+        type: 'remove_completion',
         person_name: input.person_name as string,
         task_name: input.task_name as string,
       };

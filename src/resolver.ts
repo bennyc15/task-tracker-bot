@@ -1,10 +1,23 @@
 import Fuse from 'fuse.js';
 import { Person, Task, ResolveResult } from './types';
 
+// Checks if `query` matches the first query.length chars of `word`,
+// allowing one transposition of adjacent characters (e.g. "בני" ↔ "בינ").
+function prefixWithTransposition(query: string, word: string): boolean {
+  const prefix = word.substring(0, query.length);
+  if (prefix === query) return true;
+  for (let i = 0; i < prefix.length - 1; i++) {
+    const swapped = prefix.split('');
+    [swapped[i], swapped[i + 1]] = [swapped[i + 1], swapped[i]];
+    if (swapped.join('') === query) return true;
+  }
+  return false;
+}
+
 export function searchPeopleByName(query: string, people: Person[]): Person[] {
   const lower = query.toLowerCase();
 
-  // Word-prefix match: any word in the name starts with the query
+  // Word-prefix match (exact): any word in the name starts with the query
   const prefixMatch = people.filter(p =>
     p.full_name.split(/\s+/).some(word => word.toLowerCase().startsWith(lower))
   );
@@ -14,17 +27,15 @@ export function searchPeopleByName(query: string, people: Person[]): Person[] {
   const substring = people.filter(p => p.full_name.toLowerCase().includes(lower));
   if (substring.length > 0) return substring;
 
-  // Fuzzy match on each word of the name separately — catches Hebrew nickname variants
-  // (e.g. "בני" → "בינימין"). Strict per-word threshold to avoid false positives.
-  const wordFuse = new Fuse(
-    people.flatMap(p => p.full_name.split(/\s+/).map(word => ({ word, person: p }))),
-    { keys: ['word'], threshold: 0.3, includeScore: true }
+  // Transposition-prefix match: catches variants like "בני"→"בינימין" (נ↔י swap)
+  const transpositionMatch = people.filter(p =>
+    p.full_name.split(/\s+/).some(word => prefixWithTransposition(lower, word.toLowerCase()))
   );
-  const wordMatches = wordFuse.search(query)
-    .filter(r => (r.score ?? 1) < 0.3)
-    .map(r => r.item.person);
-  const unique = [...new Map(wordMatches.map(p => [p.id, p])).values()];
-  return unique;
+  if (transpositionMatch.length > 0) return transpositionMatch;
+
+  // Strict fuzzy fallback
+  const fuse = new Fuse(people, { keys: ['full_name'], threshold: 0.25, includeScore: true });
+  return fuse.search(query).filter(r => (r.score ?? 1) < 0.25).map(r => r.item);
 }
 
 function splitName(fullName: string): string[] {

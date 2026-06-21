@@ -162,6 +162,35 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         break;
       }
 
+      case 'bulk_completion': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        const tasks = getAllTasks();
+        const taskResult = resolveTask(intent.task_name, tasks);
+        if (taskResult.status === 'not_found') { reply = `לא נמצאה משימה בשם "${intent.task_name}".`; break; }
+        if (taskResult.status === 'ambiguous') {
+          reply = `נמצאו מספר משימות:\n${taskResult.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
+          break;
+        }
+        const task = taskResult.item;
+        const group = intent.filters.length > 0 ? getPeopleByFilters(intent.filters) : getAllPeople();
+        const relevant = group.filter(p => {
+          if (!task.required_role) return true;
+          const roles = task.required_role.split(',').map(r => r.trim());
+          return roles.includes(p.role);
+        });
+        if (relevant.length === 0) { reply = 'לא נמצאו אנשים מתאימים.'; break; }
+        let count = 0;
+        for (const p of relevant) {
+          if (intent.undo) { removeCompletion(p.id, task.id); count++; }
+          else { if (recordCompletion(p.id, task.id, msg.from)) count++; }
+        }
+        const label = intent.filters.map(f => f.value).join(', ') || 'כולם';
+        reply = intent.undo
+          ? `↩️ בוטל רישום "${task.name}" עבור ${count} אנשים (${label}).`
+          : `✅ נרשמה השלמת "${task.name}" עבור ${count} אנשים (${label}).`;
+        break;
+      }
+
       case 'remove_completion': {
         const people = getAllPeople();
         const tasks = getAllTasks();

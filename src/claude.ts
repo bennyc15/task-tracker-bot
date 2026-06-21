@@ -125,6 +125,30 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'bulk_completion',
+    description: 'רשום השלמת משימה לקבוצת אנשים (צוות, מחלקה, תפקיד) בבת אחת — השתמש כאשר אומרים "צוות X עשה Y" או "כולם ביצעו Y". undo=true לביטול קבוצתי.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        task_name: { type: 'string', description: 'שם המשימה' },
+        filters: {
+          type: 'array',
+          description: 'סינון הקבוצה (crew/department/role)',
+          items: {
+            type: 'object',
+            properties: {
+              field: { type: 'string', enum: ['department', 'crew', 'role'] },
+              value: { type: 'string' },
+            },
+            required: ['field', 'value'],
+          },
+        },
+        undo: { type: 'boolean', description: 'true כדי לבטל את ההשלמות במקום לרשום' },
+      },
+      required: ['task_name', 'filters'],
+    },
+  },
+  {
     name: 'get_report',
     description: 'הצג דוח על השלמת משימות. אפשר לסנן לפי מחלקה או תפקיד ספציפי באמצעות filter_field ו-filter_value',
     input_schema: {
@@ -243,6 +267,30 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
         task_name: { type: 'string', description: 'שם המשימה לביטול' },
       },
       required: ['person_name', 'task_name'],
+    },
+  },
+  {
+    name: 'bulk_completion',
+    description: 'רשום השלמת משימה לקבוצת אנשים (צוות, מחלקה, תפקיד) בבת אחת — השתמש כאשר אומרים "צוות X עשה Y" או "כולם ביצעו Y". undo=true לביטול קבוצתי.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        task_name: { type: 'string', description: 'שם המשימה' },
+        filters: {
+          type: 'array',
+          description: 'סינון הקבוצה (crew/department/role)',
+          items: {
+            type: 'object',
+            properties: {
+              field: { type: 'string', enum: ['department', 'crew', 'role'] },
+              value: { type: 'string' },
+            },
+            required: ['field', 'value'],
+          },
+        },
+        undo: { type: 'boolean', description: 'true כדי לבטל את ההשלמות במקום לרשום' },
+      },
+      required: ['task_name', 'filters'],
     },
   },
   {
@@ -406,6 +454,13 @@ export async function parseIntent(
         type: 'remove_completion',
         person_name: input.person_name as string,
         task_name: input.task_name as string,
+      };
+    case 'bulk_completion':
+      return {
+        type: 'bulk_completion',
+        task_name: input.task_name as string,
+        filters: input.filters as Array<{ field: string; value: string }>,
+        undo: input.undo as boolean | undefined,
       };
     case 'get_report':
       return {

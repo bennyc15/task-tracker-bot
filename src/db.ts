@@ -82,6 +82,31 @@ export function getAllPeople(): Person[] {
   return rows;
 }
 
+export function getPeopleByFilters(filters: Array<{ field: string; value: string }>): Person[] {
+  const allowed = ['full_name', 'department', 'crew', 'role'];
+  const valid = filters.filter(f => allowed.includes(f.field));
+  if (valid.length === 0) return getAllPeople();
+  const whereClauses = valid.map(f => `${f.field} LIKE ?`).join(' AND ');
+  const values = valid.map(f => `%${f.value}%`);
+  const rows: Person[] = [];
+  const stmt = getDb().prepare(
+    `SELECT id, full_name, department, crew, role FROM people WHERE ${whereClauses} ORDER BY full_name`
+  );
+  stmt.bind(values);
+  while (stmt.step()) {
+    const row = stmt.getAsObject() as { id: number; full_name: string; department: string; crew: string; role: string };
+    rows.push({
+      id: Number(row.id),
+      full_name: String(row.full_name),
+      department: String(row.department),
+      crew: String(row.crew),
+      role: String(row.role),
+    });
+  }
+  stmt.free();
+  return rows;
+}
+
 export function getPeopleBy(field: string, value: string): Person[] {
   const allowed = ['full_name', 'department', 'crew', 'role'];
   if (!allowed.includes(field)) return getAllPeople();

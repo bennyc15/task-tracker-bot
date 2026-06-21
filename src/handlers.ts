@@ -5,6 +5,7 @@ import { resolvePerson, resolveTask } from './resolver';
 import {
   getAllPeople,
   getPeopleBy,
+  getPeopleByFilters,
   getAllTasks,
   addPerson,
   updatePerson,
@@ -162,11 +163,15 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
       }
 
       case 'list_people': {
-        const { filter_field, filter_value, group_by } = intent;
+        const { filters, group_by } = intent;
         let people: ReturnType<typeof getAllPeople>;
-        if (filter_field === 'full_name' && filter_value) {
-          const all = getAllPeople();
-          const resolved = resolvePerson(filter_value, all);
+
+        const nameFilter = filters?.find(f => f.field === 'full_name');
+        const otherFilters = filters?.filter(f => f.field !== 'full_name') ?? [];
+
+        if (nameFilter) {
+          const all = otherFilters.length > 0 ? getPeopleByFilters(otherFilters) : getAllPeople();
+          const resolved = resolvePerson(nameFilter.value, all);
           if (resolved.status === 'found') {
             people = [resolved.item];
           } else if (resolved.status === 'ambiguous') {
@@ -175,13 +180,15 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           } else {
             people = [];
           }
+        } else if (otherFilters.length > 0) {
+          people = getPeopleByFilters(otherFilters);
         } else {
-          people = filter_field && filter_value ? getPeopleBy(filter_field, filter_value) : getAllPeople();
+          people = getAllPeople();
         }
 
         if (people.length === 0) {
-          reply = filter_field && filter_value
-            ? `לא נמצאו אנשים עם ${filter_field} "${filter_value}".`
+          reply = filters && filters.length > 0
+            ? `לא נמצאו אנשים התואמים את החיפוש.`
             : 'אין אנשים רשומים במערכת עדיין.';
           break;
         }
@@ -207,8 +214,11 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           }
           reply = sections.join('\n');
         } else {
-          const header = filter_field && filter_value
-            ? `👥 *אנשים עם ${filter_field} "${filter_value}" (${people.length}):*`
+          const filterDesc = filters && filters.length > 0
+            ? filters.map(f => `${f.field}: "${f.value}"`).join(', ')
+            : null;
+          const header = filterDesc
+            ? `👥 *אנשים (${filterDesc}) — ${people.length}:*`
             : `👥 *רשימת אנשים (${people.length}):*`;
           const lines = people.map(p => {
             const meta = [p.department, p.crew, p.role].filter(Boolean).join(' · ');

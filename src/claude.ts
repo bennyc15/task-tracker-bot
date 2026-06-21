@@ -122,7 +122,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'list_people',
-    description: 'הצג את רשימת האנשים. השתמש ב-group_by כדי לקבץ לפי שדה (למשל "לפי מחלקה"), ו-filter_field+filter_value כדי לסנן לערך ספציפי (למשל "ממחלקת פיתוח")',
+    description: 'הצג את רשימת האנשים. השתמש ב-group_by לקיבוץ, ו-filters לסינון לפי ערכים ספציפיים — ניתן לשלב מספר פילטרים (למשל: צוות ד + תפקיד תותחן)',
     input_schema: {
       type: 'object',
       properties: {
@@ -131,14 +131,24 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
           enum: ['department', 'crew', 'role'],
           description: 'קיבוץ כל האנשים לפי שדה זה — השתמש כאשר המשתמש אומר "לפי מחלקה" / "לפי צוות" / "לפי תפקיד" ללא ערך ספציפי',
         },
-        filter_field: {
-          type: 'string',
-          enum: ['department', 'crew', 'role', 'full_name'],
-          description: 'שדה לסינון לערך ספציפי — השתמש יחד עם filter_value',
-        },
-        filter_value: {
-          type: 'string',
-          description: 'הערך הספציפי לחיפוש בשדה הנבחר',
+        filters: {
+          type: 'array',
+          description: 'רשימת תנאי סינון — כל תנאי הוא שדה+ערך. ניתן לשלב מספר תנאים יחד',
+          items: {
+            type: 'object',
+            properties: {
+              field: {
+                type: 'string',
+                enum: ['department', 'crew', 'role', 'full_name'],
+                description: 'שדה לסינון',
+              },
+              value: {
+                type: 'string',
+                description: 'הערך לחיפוש',
+              },
+            },
+            required: ['field', 'value'],
+          },
         },
       },
     },
@@ -205,7 +215,7 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'list_people',
-    description: 'הצג את רשימת האנשים. השתמש ב-group_by כדי לקבץ לפי שדה (למשל "לפי מחלקה"), ו-filter_field+filter_value כדי לסנן לערך ספציפי (למשל "ממחלקת פיתוח")',
+    description: 'הצג את רשימת האנשים. השתמש ב-group_by לקיבוץ, ו-filters לסינון לפי ערכים ספציפיים — ניתן לשלב מספר פילטרים (למשל: צוות ד + תפקיד תותחן)',
     input_schema: {
       type: 'object',
       properties: {
@@ -214,14 +224,24 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
           enum: ['department', 'crew', 'role'],
           description: 'קיבוץ כל האנשים לפי שדה זה — השתמש כאשר המשתמש אומר "לפי מחלקה" / "לפי צוות" / "לפי תפקיד" ללא ערך ספציפי',
         },
-        filter_field: {
-          type: 'string',
-          enum: ['department', 'crew', 'role', 'full_name'],
-          description: 'שדה לסינון לערך ספציפי — השתמש יחד עם filter_value',
-        },
-        filter_value: {
-          type: 'string',
-          description: 'הערך הספציפי לחיפוש בשדה הנבחר',
+        filters: {
+          type: 'array',
+          description: 'רשימת תנאי סינון — כל תנאי הוא שדה+ערך. ניתן לשלב מספר תנאים יחד',
+          items: {
+            type: 'object',
+            properties: {
+              field: {
+                type: 'string',
+                enum: ['department', 'crew', 'role', 'full_name'],
+                description: 'שדה לסינון',
+              },
+              value: {
+                type: 'string',
+                description: 'הערך לחיפוש',
+              },
+            },
+            required: ['field', 'value'],
+          },
         },
       },
     },
@@ -311,8 +331,7 @@ export async function parseIntent(message: string, isAdmin: boolean): Promise<In
       return {
         type: 'list_people',
         group_by: input.group_by as string | undefined,
-        filter_field: input.filter_field as string | undefined,
-        filter_value: input.filter_value as string | undefined,
+        filters: input.filters as Array<{ field: string; value: string }> | undefined,
       };
     case 'list_tasks':
       return { type: 'list_tasks' };

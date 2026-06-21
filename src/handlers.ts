@@ -87,27 +87,27 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         break;
       }
 
-      case 'update_person': {
+      case 'update_people': {
         if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
-        const people = getAllPeople();
-        const resolved = resolvePerson(intent.name, people);
-        if (resolved.status === 'not_found') {
-          reply = `לא נמצא אדם בשם "${intent.name}".`;
-        } else if (resolved.status === 'ambiguous') {
-          reply = `נמצאו מספר אנשים דומים:\n${resolved.candidates.join('\n')}\nאנא ציין שם מדויק יותר.`;
-        } else {
-          updatePerson(resolved.item.id, {
-            department: intent.department,
-            crew: intent.crew,
-            role: intent.role,
-          });
-          const changes = [
-            intent.department && `מחלקה: ${intent.department}`,
-            intent.crew && `צוות: ${intent.crew}`,
-            intent.role && `תפקיד: ${intent.role}`,
-          ].filter(Boolean).join(', ');
-          reply = `✅ ${resolved.item.full_name} עודכן — ${changes}.`;
+        const allPeopleForUpdate = getAllPeople();
+        const results: string[] = [];
+        for (const p of intent.people) {
+          const resolved = resolvePerson(p.name, allPeopleForUpdate);
+          if (resolved.status === 'not_found') {
+            results.push(`✗ "${p.name}" — לא נמצא`);
+          } else if (resolved.status === 'ambiguous') {
+            results.push(`✗ "${p.name}" — מספר תוצאות: ${resolved.candidates.join(', ')}`);
+          } else {
+            updatePerson(resolved.item.id, { department: p.department, crew: p.crew, role: p.role });
+            const changes = [
+              p.department && `מחלקה: ${p.department}`,
+              p.crew && `צוות: ${p.crew}`,
+              p.role && `תפקיד: ${p.role}`,
+            ].filter(Boolean).join(', ');
+            results.push(`✅ ${resolved.item.full_name} — ${changes}`);
+          }
         }
+        reply = `תוצאות עדכון:\n${results.join('\n')}`;
         break;
       }
 

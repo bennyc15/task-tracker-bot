@@ -66,17 +66,27 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
-    name: 'update_person',
-    description: 'עדכן שדות של אדם קיים — מחלקה, צוות, תפקיד. השתמש כאשר המשתמש רוצה לשנות פרטים של אדם שכבר קיים',
+    name: 'update_people',
+    description: 'עדכן שדות של אנשים קיימים — מחלקה, צוות, תפקיד. השתמש תמיד בכלי זה גם אם יש אדם אחד בלבד',
     input_schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', description: 'שם האדם לעדכון' },
-        department: { type: 'string', description: 'מחלקה חדשה (אופציונלי)' },
-        crew: { type: 'string', description: 'צוות חדש (אופציונלי)' },
-        role: { type: 'string', description: 'תפקיד חדש (אופציונלי)' },
+        people: {
+          type: 'array',
+          description: 'רשימת אנשים לעדכון',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'שם האדם לעדכון' },
+              department: { type: 'string', description: 'מחלקה חדשה (אופציונלי)' },
+              crew: { type: 'string', description: 'צוות חדש (אופציונלי)' },
+              role: { type: 'string', description: 'תפקיד חדש (אופציונלי)' },
+            },
+            required: ['name'],
+          },
+        },
       },
-      required: ['name'],
+      required: ['people'],
     },
   },
   {
@@ -305,13 +315,10 @@ export async function parseIntent(message: string, isAdmin: boolean): Promise<In
       return { type: 'remove_task', task_name: input.task_name as string };
     case 'add_people':
       return { type: 'add_people', people: input.people as Array<{ name: string; department: string; crew: string; role: string }> };
-    case 'update_person':
+    case 'update_people':
       return {
-        type: 'update_person',
-        name: input.name as string,
-        department: input.department as string | undefined,
-        crew: input.crew as string | undefined,
-        role: input.role as string | undefined,
+        type: 'update_people',
+        people: input.people as Array<{ name: string; department?: string; crew?: string; role?: string }>,
       };
     case 'remove_person':
       return { type: 'remove_person', name: input.name as string };

@@ -28,6 +28,7 @@ export async function initDb(): Promise<void> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       full_name TEXT NOT NULL UNIQUE,
       department TEXT NOT NULL DEFAULT '',
+      crew TEXT NOT NULL DEFAULT '',
       role TEXT NOT NULL DEFAULT ''
     );
 
@@ -50,6 +51,7 @@ export async function initDb(): Promise<void> {
 
   // Migrate existing DB that may lack the new columns
   try { db.run(`ALTER TABLE people ADD COLUMN department TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }
+  try { db.run(`ALTER TABLE people ADD COLUMN crew TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }
   try { db.run(`ALTER TABLE people ADD COLUMN role TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }
   try { db.run(`ALTER TABLE tasks ADD COLUMN required_role TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }
 
@@ -65,13 +67,14 @@ function getDb(): Database {
 
 export function getAllPeople(): Person[] {
   const rows: Person[] = [];
-  const stmt = getDb().prepare('SELECT id, full_name, department, role FROM people ORDER BY full_name');
+  const stmt = getDb().prepare('SELECT id, full_name, department, crew, role FROM people ORDER BY full_name');
   while (stmt.step()) {
-    const row = stmt.getAsObject() as { id: number; full_name: string; department: string; role: string };
+    const row = stmt.getAsObject() as { id: number; full_name: string; department: string; crew: string; role: string };
     rows.push({
       id: Number(row.id),
       full_name: String(row.full_name),
       department: String(row.department),
+      crew: String(row.crew),
       role: String(row.role),
     });
   }
@@ -80,19 +83,20 @@ export function getAllPeople(): Person[] {
 }
 
 export function getPeopleBy(field: string, value: string): Person[] {
-  const allowed = ['full_name', 'department', 'role'];
+  const allowed = ['full_name', 'department', 'crew', 'role'];
   if (!allowed.includes(field)) return getAllPeople();
   const rows: Person[] = [];
   const stmt = getDb().prepare(
-    `SELECT id, full_name, department, role FROM people WHERE ${field} LIKE ? ORDER BY full_name`
+    `SELECT id, full_name, department, crew, role FROM people WHERE ${field} LIKE ? ORDER BY full_name`
   );
   stmt.bind([`%${value}%`]);
   while (stmt.step()) {
-    const row = stmt.getAsObject() as { id: number; full_name: string; department: string; role: string };
+    const row = stmt.getAsObject() as { id: number; full_name: string; department: string; crew: string; role: string };
     rows.push({
       id: Number(row.id),
       full_name: String(row.full_name),
       department: String(row.department),
+      crew: String(row.crew),
       role: String(row.role),
     });
   }
@@ -100,9 +104,9 @@ export function getPeopleBy(field: string, value: string): Person[] {
   return rows;
 }
 
-export function addPerson(fullName: string, department: string, role: string): boolean {
+export function addPerson(fullName: string, department: string, crew: string, role: string): boolean {
   try {
-    getDb().run('INSERT INTO people (full_name, department, role) VALUES (?, ?, ?)', [fullName, department, role]);
+    getDb().run('INSERT INTO people (full_name, department, crew, role) VALUES (?, ?, ?, ?)', [fullName, department, crew, role]);
     save();
     return true;
   } catch {

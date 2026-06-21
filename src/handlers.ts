@@ -63,7 +63,7 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
         const results: string[] = [];
         for (const p of intent.people) {
-          const added = addPerson(p.name, p.department, p.role);
+          const added = addPerson(p.name, p.department, p.crew ?? '', p.role);
           results.push(added ? `✓ ${p.name}` : `✗ ${p.name} (כבר קיים)`);
         }
         reply = `תוצאות הוספת אנשים:\n${results.join('\n')}`;
@@ -138,7 +138,7 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         if (group_by) {
           const groups = new Map<string, typeof people>();
           for (const p of people) {
-            const key = (group_by === 'department' ? p.department : p.role) || '(ללא)';
+            const key = (group_by === 'department' ? p.department : group_by === 'crew' ? p.crew : p.role) || '(ללא)';
             if (!groups.has(key)) groups.set(key, []);
             groups.get(key)!.push(p);
           }
@@ -146,7 +146,11 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           for (const [groupName, members] of groups) {
             sections.push('', `*${groupName}*`);
             for (const p of members) {
-              const meta = group_by === 'department' ? p.role : p.department;
+              const meta = group_by === 'department'
+                ? [p.crew, p.role].filter(Boolean).join(' · ')
+                : group_by === 'crew'
+                  ? [p.department, p.role].filter(Boolean).join(' · ')
+                  : [p.department, p.crew].filter(Boolean).join(' · ');
               sections.push(`• ${p.full_name}${meta ? ` (${meta})` : ''}`);
             }
           }
@@ -156,7 +160,7 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
             ? `👥 *אנשים עם ${filter_field} "${filter_value}" (${people.length}):*`
             : `👥 *רשימת אנשים (${people.length}):*`;
           const lines = people.map(p => {
-            const meta = [p.department, p.role].filter(Boolean).join(' · ');
+            const meta = [p.department, p.crew, p.role].filter(Boolean).join(' · ');
             return `• ${p.full_name}${meta ? ` (${meta})` : ''}`;
           });
           reply = `${header}\n\n${lines.join('\n')}`;

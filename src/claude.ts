@@ -55,9 +55,10 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
             properties: {
               name: { type: 'string', description: 'שם מלא' },
               department: { type: 'string', description: 'מחלקה' },
+              crew: { type: 'string', description: 'צוות (תת-יחידה בתוך המחלקה, למשל "צוות 1א")' },
               role: { type: 'string', description: 'תפקיד' },
             },
-            required: ['name', 'department', 'role'],
+            required: ['name', 'department', 'crew', 'role'],
           },
         },
       },
@@ -95,8 +96,8 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
       properties: {
         filter_field: {
           type: 'string',
-          enum: ['department', 'role'],
-          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה או תפקיד ספציפי',
+          enum: ['department', 'crew', 'role'],
+          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות או תפקיד ספציפי',
         },
         filter_value: {
           type: 'string',
@@ -113,12 +114,12 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
       properties: {
         group_by: {
           type: 'string',
-          enum: ['department', 'role'],
-          description: 'קיבוץ כל האנשים לפי שדה זה — השתמש כאשר המשתמש אומר "לפי מחלקה" / "לפי תפקיד" ללא ערך ספציפי',
+          enum: ['department', 'crew', 'role'],
+          description: 'קיבוץ כל האנשים לפי שדה זה — השתמש כאשר המשתמש אומר "לפי מחלקה" / "לפי צוות" / "לפי תפקיד" ללא ערך ספציפי',
         },
         filter_field: {
           type: 'string',
-          enum: ['department', 'role', 'full_name'],
+          enum: ['department', 'crew', 'role', 'full_name'],
           description: 'שדה לסינון לערך ספציפי — השתמש יחד עם filter_value',
         },
         filter_value: {
@@ -178,8 +179,8 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
       properties: {
         filter_field: {
           type: 'string',
-          enum: ['department', 'role'],
-          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה או תפקיד ספציפי',
+          enum: ['department', 'crew', 'role'],
+          description: 'שדה לסינון — השתמש כאשר המשתמש מבקש דוח למחלקה, צוות או תפקיד ספציפי',
         },
         filter_value: {
           type: 'string',
@@ -196,12 +197,12 @@ const REPORTER_TOOLS: Anthropic.Tool[] = [
       properties: {
         group_by: {
           type: 'string',
-          enum: ['department', 'role'],
-          description: 'קיבוץ כל האנשים לפי שדה זה — השתמש כאשר המשתמש אומר "לפי מחלקה" / "לפי תפקיד" ללא ערך ספציפי',
+          enum: ['department', 'crew', 'role'],
+          description: 'קיבוץ כל האנשים לפי שדה זה — השתמש כאשר המשתמש אומר "לפי מחלקה" / "לפי צוות" / "לפי תפקיד" ללא ערך ספציפי',
         },
         filter_field: {
           type: 'string',
-          enum: ['department', 'role', 'full_name'],
+          enum: ['department', 'crew', 'role', 'full_name'],
           description: 'שדה לסינון לערך ספציפי — השתמש יחד עם filter_value',
         },
         filter_value: {
@@ -269,7 +270,7 @@ export async function parseIntent(message: string, isAdmin: boolean): Promise<In
     case 'remove_task':
       return { type: 'remove_task', task_name: input.task_name as string };
     case 'add_people':
-      return { type: 'add_people', people: input.people as Array<{ name: string; department: string; role: string }> };
+      return { type: 'add_people', people: input.people as Array<{ name: string; department: string; crew: string; role: string }> };
     case 'remove_person':
       return { type: 'remove_person', name: input.name as string };
     case 'record_completion':

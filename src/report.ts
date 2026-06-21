@@ -37,7 +37,7 @@ export function generateReport(filterField?: string, filterValue?: string): stri
     if (relevantTasks.length === 0) continue;
     const allDone = missing.length === 0;
     const statusIcon = allDone ? '✅' : '⚠️';
-    const meta = [person.department, person.role].filter(Boolean).join(' · ');
+    const meta = [person.department, person.crew, person.role].filter(Boolean).join(' · ');
     lines.push(`${statusIcon} *${person.full_name}*${meta ? ` (${meta})` : ''}`);
 
     if (completed.length > 0) {

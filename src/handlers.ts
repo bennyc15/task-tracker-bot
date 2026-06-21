@@ -16,6 +16,7 @@ import {
   removeCompletion,
   isCompleted,
   clearDb,
+  clearCompletions,
   addInstruction,
   getAllInstructions,
   removeInstruction,
@@ -343,6 +344,13 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
           });
           reply = `📋 *רשימת משימות (${tasks.length}):*\n\n${lines.join('\n')}`;
         }
+        break;
+      }
+
+      case 'clear_completions': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        clearCompletions();
+        reply = '↩️ כל ההשלמות הוסרו — האנשים והמשימות נשארו במערכת.';
         break;
       }
 

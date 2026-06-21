@@ -208,6 +208,11 @@ export function removeTask(id: number): void {
 
 // --- Reset ---
 
+export function clearCompletions(): void {
+  getDb().run('DELETE FROM completions');
+  save();
+}
+
 // --- Custom Instructions ---
 
 export function addInstruction(instruction: string): number {

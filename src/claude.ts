@@ -241,7 +241,7 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'clear_completions',
-    description: 'מחק את כל ההשלמות הרשומות — השתמש כאשר רוצים לאפס את הדוח / "אף אחד לא ביצע כלום" / "תסיר את כל ההשלמות". האנשים והמשימות נשארים.',
+    description: 'מחק את כל ההשלמות הרשומות — השתמש כאשר רוצים לאפס את הדוח / "תמחק את כל מה שבוצע" / "תבטל את כל המשימות שבוצעו" / "אף אחד לא ביצע כלום" / "תסיר את כל ההשלמות" / "אפס הכל". האנשים והמשימות נשארים.',
     input_schema: {
       type: 'object',
       properties: {},
@@ -485,7 +485,7 @@ export async function parseIntent(
     max_tokens: 1024,
     system,
     tools,
-    tool_choice: { type: 'auto' },
+    tool_choice: isAdmin ? { type: 'any' } : { type: 'auto' },
     messages,
   });
 
@@ -553,6 +553,8 @@ export async function parseIntent(
       return { type: 'export_excel' };
     case 'list_tasks':
       return { type: 'list_tasks' };
+    case 'clear_completions':
+      return { type: 'clear_completions' };
     case 'clear_db':
       return { type: 'clear_db' };
     case 'add_instruction':

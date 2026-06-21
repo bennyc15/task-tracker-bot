@@ -39,6 +39,9 @@ export type Intent =
   | { type: 'task_roster'; task_name: string; show: 'completed' | 'missing' | 'all' }
   | { type: 'list_tasks' }
   | { type: 'clear_db' }
+  | { type: 'add_instruction'; instruction: string }
+  | { type: 'list_instructions' }
+  | { type: 'remove_instruction'; id: number }
   | { type: 'unknown'; reply: string }
   | { type: 'text_response'; text: string };
 

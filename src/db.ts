@@ -49,6 +49,12 @@ export async function initDb(): Promise<void> {
     );
   `);
 
+    CREATE TABLE IF NOT EXISTS custom_instructions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      instruction TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
   // Migrate existing DB that may lack the new columns
   try { db.run(`ALTER TABLE people ADD COLUMN department TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }
   try { db.run(`ALTER TABLE people ADD COLUMN crew TEXT NOT NULL DEFAULT ''`); } catch { /* already exists */ }
@@ -200,10 +206,39 @@ export function removeTask(id: number): void {
 
 // --- Reset ---
 
+// --- Custom Instructions ---
+
+export function addInstruction(instruction: string): number {
+  getDb().run('INSERT INTO custom_instructions (instruction) VALUES (?)', [instruction]);
+  save();
+  const stmt = getDb().prepare('SELECT last_insert_rowid() as id');
+  stmt.step();
+  const id = Number((stmt.getAsObject() as { id: number }).id);
+  stmt.free();
+  return id;
+}
+
+export function getAllInstructions(): Array<{ id: number; instruction: string; created_at: string }> {
+  const rows: Array<{ id: number; instruction: string; created_at: string }> = [];
+  const stmt = getDb().prepare('SELECT id, instruction, created_at FROM custom_instructions ORDER BY id');
+  while (stmt.step()) {
+    const row = stmt.getAsObject() as { id: number; instruction: string; created_at: string };
+    rows.push({ id: Number(row.id), instruction: String(row.instruction), created_at: String(row.created_at) });
+  }
+  stmt.free();
+  return rows;
+}
+
+export function removeInstruction(id: number): void {
+  getDb().run('DELETE FROM custom_instructions WHERE id = ?', [id]);
+  save();
+}
+
 export function clearDb(): void {
   getDb().run('DELETE FROM completions');
   getDb().run('DELETE FROM tasks');
   getDb().run('DELETE FROM people');
+  getDb().run('DELETE FROM custom_instructions');
   save();
 }
 

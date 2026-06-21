@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Intent } from './types';
+import { getAllInstructions } from './db';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -232,6 +233,33 @@ const ADMIN_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'add_instruction',
+    description: 'שמור הנחיה קבועה שתשפיע על ההתנהגות העתידית של הבוט — למשל "כאשר X אמור Y", "תמיד פרש Z כ-W"',
+    input_schema: {
+      type: 'object',
+      properties: {
+        instruction: { type: 'string', description: 'ההנחיה לשמירה בעברית' },
+      },
+      required: ['instruction'],
+    },
+  },
+  {
+    name: 'list_instructions',
+    description: 'הצג את רשימת ההנחיות השמורות',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'remove_instruction',
+    description: 'הסר הנחיה שמורה לפי מספר ID',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', description: 'מספר ה-ID של ההנחיה להסרה' },
+      },
+      required: ['id'],
+    },
+  },
+  {
     name: 'unknown',
     description: 'השתמש בכלי זה כאשר ההודעה אינה ברורה או אינה קשורה לניהול משימות',
     input_schema: {
@@ -403,7 +431,11 @@ export async function parseIntent(
   history: HistoryEntry[] = [],
 ): Promise<Intent> {
   const tools = isAdmin ? ADMIN_TOOLS : REPORTER_TOOLS;
-  const system = isAdmin ? ADMIN_SYSTEM : REPORTER_SYSTEM;
+  const instructions = getAllInstructions();
+  const instructionBlock = instructions.length > 0
+    ? `\n\nהנחיות מותאמות אישית (מהמנהל):\n${instructions.map(i => `- ${i.instruction}`).join('\n')}`
+    : '';
+  const system = (isAdmin ? ADMIN_SYSTEM : REPORTER_SYSTEM) + instructionBlock;
 
   const messages: Anthropic.MessageParam[] = [
     ...history.map(h => ({ role: h.role, content: h.content })),
@@ -484,6 +516,12 @@ export async function parseIntent(
       return { type: 'list_tasks' };
     case 'clear_db':
       return { type: 'clear_db' };
+    case 'add_instruction':
+      return { type: 'add_instruction', instruction: input.instruction as string };
+    case 'list_instructions':
+      return { type: 'list_instructions' };
+    case 'remove_instruction':
+      return { type: 'remove_instruction', id: input.id as number };
     default:
       return { type: 'unknown', reply: (input.reply as string) || 'מצטער, לא הצלחתי להבין את הבקשה.' };
   }

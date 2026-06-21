@@ -15,6 +15,9 @@ import {
   removeCompletion,
   isCompleted,
   clearDb,
+  addInstruction,
+  getAllInstructions,
+  removeInstruction,
 } from './db';
 import { IncomingMessage } from './types';
 
@@ -337,6 +340,32 @@ export async function handleMessage(msg: IncomingMessage): Promise<void> {
         if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
         clearDb();
         reply = '🗑️ מסד הנתונים נוקה בהצלחה — כל האנשים, המשימות וההשלמות נמחקו.';
+        break;
+      }
+
+      case 'add_instruction': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        const id = addInstruction(intent.instruction);
+        reply = `✅ הנחיה #${id} נשמרה: "${intent.instruction}"`;
+        break;
+      }
+
+      case 'list_instructions': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        const instructions = getAllInstructions();
+        if (instructions.length === 0) {
+          reply = 'אין הנחיות שמורות.';
+        } else {
+          const lines = instructions.map(i => `#${i.id}: ${i.instruction}`);
+          reply = `📝 *הנחיות שמורות (${instructions.length}):*\n\n${lines.join('\n')}`;
+        }
+        break;
+      }
+
+      case 'remove_instruction': {
+        if (!admin) { reply = 'אין לך הרשאה לבצע פעולה זו.'; break; }
+        removeInstruction(intent.id);
+        reply = `✅ הנחיה #${intent.id} הוסרה.`;
         break;
       }
 
